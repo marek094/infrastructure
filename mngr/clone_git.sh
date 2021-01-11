@@ -10,12 +10,21 @@ else
     cd $parent 
 fi
 
+# CD TO INFRASTRUCTURE_DIR
 cd $infrastructure_dir
+
+# Config Git Hooks
+hooks=./mngr/git_hooks
+git config core.hooksPath "$hooks"
 
 # git repos as listed at one place in .gitignore
 tag=persian_repos
 repos=`awk "/$tag/{f=1;next} /$tag/{f=0} f" .gitignore | tr -d /`
 
 for repo in $repos; do
-    git clone git@github.com:marek094/$repo.git 
+    git clone git@github.com:marek094/$repo.git
+    ( 
+        cd "$repo"; 
+        git config core.hooksPath "../$hooks"
+    )
 done
