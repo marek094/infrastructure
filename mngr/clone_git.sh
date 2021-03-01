@@ -3,8 +3,18 @@
 infrastructure_dir=pepr
 parent=../..
 
+sshOrHttps=${1:-ssh}
+
+if [ "$sshOrHttps" = "ssh" ]; then
+    address="git@github.com:"
+else
+    address="https://github.com/"
+fi
+
+echo ${address}
+
 if [ ! -d $parent/$infrastructure_dir/.git ]; then
-    git clone git@github.com:marek094/infrastructure.git $infrastructure_dir
+    git clone ${address}marek094/infrastructure.git $infrastructure_dir
 else 
     # parent
     cd $parent 
