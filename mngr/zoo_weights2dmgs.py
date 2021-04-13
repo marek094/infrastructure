@@ -3,6 +3,7 @@ import numpy as np
 import persian.filtration as pf
 import argparse
 import pandas as pd
+import time
 
 
 def main(args, source):
@@ -20,11 +21,13 @@ def main(args, source):
     count = args.count
     seed = 77
     result = []
+    mx_num_feats = 0
     for i, cnn_weights in enumerate(data):
         if i % 1000 == 0:
             print(f'processing {i}/{n-1}', sep='\t')
 
-        np.random.seed(seed)
+        if not args.no_seed:
+            np.random.seed(seed)
         clouds = [
             np.array([
                 cnn_weights[b:e][np.random.permutation(e - b)][:n_samples]
@@ -34,9 +37,16 @@ def main(args, source):
         ]
 
         dgms = pf.persistet_diagram(clouds, n_jobs=-1)
+        mx_num_feats = max(mx_num_feats, dgms.shape[1])
         result.append(dgms)
-        if args.test_only:
+
+        if args.test_only and i > 0:
             break
+
+    for i, r in enumerate(result):
+        zer = np.zeros((count, mx_num_feats, 3))
+        zer[:, :r.shape[1], :] = r
+        result[i] = zer
 
     np.save(source / f'dgms_s{seed}_c{count}_n{n_samples}.npy', result)
 
@@ -46,6 +56,7 @@ if __name__ == "__main__":
     parser.add_argument('--sources', type=Path, nargs='+', required=True)
     parser.add_argument('--count', type=int, default=4)
     parser.add_argument('--test_only', action='store_true')
+    parser.add_argument('--no_seed', action='store_true')
     args = parser.parse_args()
 
     for source in args.sources:
